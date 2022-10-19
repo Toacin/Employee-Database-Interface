@@ -106,6 +106,15 @@ let updateEmpManQuestion = [
     }
 ]
 
+let viewByDepartmentQuestions = [
+    {
+        type: "list",
+        name: "whichManager",
+        message: "Which Department would you like to check?",
+        choices: []
+    }
+]
+
 function askInit () {
     inquirer.prompt(initialQuestion).then((answers) => {
         switch (answers.whatToDo) {
@@ -136,9 +145,9 @@ function askInit () {
             case "View Employees by Department":
                 viewByDepartment();
                 break;
-            case "View Employee by Manager":
-                viewByManager();
-                break;
+            // case "View Employee by Manager":
+            //     viewByManager();
+            //     break;
             case "Quit":
                 console.log("Good Bye!");
                 process.exit();
@@ -272,15 +281,21 @@ let updateEmployeeManager = () => {
 };
 
 let viewByDepartment = () => {
-    db.query("SELECT first_name, last_name, name FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id; ", (err, data) => {
-        console.table(data);
-        askInit();
+    db.query("SELECT * FROM department;", (err, data) => {
+        viewByDepartmentQuestions[0].choices = data.map((element) => ({value: element.id, name: element.name}));
+        inquirer.prompt(viewByDepartmentQuestions)
+        .then((response) => {
+            db.query("SELECT first_name, last_name, name AS department FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id WHERE department.id = ?;", [response.whichManager], (err, data) => {
+                console.table(data);
+                askInit();
+            })
+        })
     })
 };
 
-let viewByManager = () => {
-    db.query("SELECT first_name, last_name, name FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id; ", (err, data) => {
-        console.table(data);
-        askInit();
-    })
-};
+// let viewByManager = () => {
+//     db.query("SELECT first_name, last_name, name FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id; ", (err, data) => {
+//         console.table(data);
+//         askInit();
+//     })
+// };

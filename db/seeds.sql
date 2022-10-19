@@ -21,7 +21,7 @@ INSERT INTO employee (first_name, last_name, role_id, manager_id)
         ('Morgan', 'Tolman', 4, 3),
         ('Derrick', 'Lafforthun', 5, NULL),
         ('Toacin', 'Patwary', 6, 5),
-        ('Disney', 'Man', 7, NULL),
+        ('Austin', 'Liddicoat', 7, NULL),
         ('Ian', 'Porter', 8, 7);
 
 SELECT * FROM department;
