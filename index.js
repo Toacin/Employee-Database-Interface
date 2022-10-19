@@ -14,8 +14,10 @@ let initialQuestion = [
         message: "What would you like to do?",
         choices: [
             "View All Employees",
+            "View Employees by Department",
             "Add Employee",
             "Update Employee Role",
+            "Update Employee Manager",
             "View All Roles",
             "Add Role",
             "View All Departments",
@@ -82,8 +84,23 @@ let updateEmployeeQuestion = [
     },
     {
         type: "list",
-        name: "newRole",
+        name: "newManager",
         message: "What is the new role of this employee?",
+        choices: []
+    }
+]
+
+let updateEmpManQuestion = [
+    {
+        type: "list",
+        name: "employeeName",
+        message: "What is the name of the employee who's manager you'd like to update?",
+        choices: []
+    },
+    {
+        type: "list",
+        name: "newManager",
+        message: "Who is their new manager?",
         choices: []
     }
 ]
@@ -110,7 +127,13 @@ function askInit () {
                 addEmployee();
                 break;
             case "Update Employee Role":
-                updateEmployee();
+                updateEmployeeRole();
+                break;
+            case "Update Employee Manager":
+                updateEmployeeManager();
+                break;
+            case "View Employees by Department":
+                viewByManager();
                 break;
             case "Quit":
                 console.log("Good Bye!");
@@ -194,7 +217,7 @@ let addEmployee = () => {
     })
 };
 
-let updateEmployee = () => {
+let updateEmployeeRole = () => {
     db.query("SELECT * FROM employee;", (err, data) => {
         updateEmployeeQuestion[0].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}));
         db.query("SELECT * FROM role;", (err, data) => {
@@ -206,7 +229,7 @@ let updateEmployee = () => {
                 (err, data) => {
                     if (err) throw err;
                     console.log("\n-----------------------------------------\n")
-                    console.log("New employee has been successfully added!")
+                    console.log("Employee's role has been successfully updated!")
                     console.log("\n-----------------------------------------\n")
                     askInit();
                 })
@@ -214,3 +237,39 @@ let updateEmployee = () => {
         })
     })
 };
+
+let updateEmployeeManager = () => {
+    db.query("SELECT * FROM employee;", (err, data) => {
+        updateEmpManQuestion[0].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}));
+        db.query("SELECT * FROM employee;", (err, data) => {
+            updateEmpManQuestion[1].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}));
+            updateEmpManQuestion[1].choices.push({value: null, name: "None"});
+            inquirer.prompt(updateEmpManQuestion)
+            .then((response) => {
+                if (response.employeeName === response.newManager) {
+                    console.log("\n-----------------------------------------\n")
+                    console.log("Employee's new manager cannot be themself")
+                    console.log("\n-----------------------------------------\n")
+                    updateEmployeeManager();
+                } else {
+                    db.query(`UPDATE employee SET manager_id = ? WHERE id = ?;`, 
+                    [response.newManager, response.employeeName], 
+                    (err, data) => {
+                        if (err) throw err;
+                        console.log("\n-----------------------------------------------\n")
+                        console.log("Employee's manager has been successfully updated!")
+                        console.log("\n-----------------------------------------------\n")
+                        askInit();
+                    })
+                }
+            })
+        })
+    })
+};
+
+let viewByManager = () => {
+    db.query("SELECT book_name, price FROM favorite_books JOIN book_prices ON favorite_books.book_price = book_prices.id;", (err, data) => {
+        console.table(data);
+        askInit();
+    })
+}
