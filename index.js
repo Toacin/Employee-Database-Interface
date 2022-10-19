@@ -15,6 +15,7 @@ let initialQuestion = [
         choices: [
             "View All Employees",
             "View Employees by Department",
+            "View Employee by Manager",
             "Add Employee",
             "Update Employee Role",
             "Update Employee Manager",
@@ -133,6 +134,9 @@ function askInit () {
                 updateEmployeeManager();
                 break;
             case "View Employees by Department":
+                viewByDepartment();
+                break;
+            case "View Employee by Manager":
                 viewByManager();
                 break;
             case "Quit":
@@ -267,9 +271,16 @@ let updateEmployeeManager = () => {
     })
 };
 
-let viewByManager = () => {
-    db.query("SELECT book_name, price FROM favorite_books JOIN book_prices ON favorite_books.book_price = book_prices.id;", (err, data) => {
+let viewByDepartment = () => {
+    db.query("SELECT first_name, last_name, name FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id; ", (err, data) => {
         console.table(data);
         askInit();
     })
-}
+};
+
+let viewByManager = () => {
+    db.query("SELECT first_name, last_name, name FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id; ", (err, data) => {
+        console.table(data);
+        askInit();
+    })
+};
