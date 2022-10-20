@@ -17,6 +17,7 @@ let initialQuestion = [
             "View Employees by Department",
             "View Employee by Manager",
             "Add Employee",
+            "Remove Employee",
             "Update Employee Role",
             "Update Employee Manager",
             "View All Roles",
@@ -154,6 +155,15 @@ let deleteRoleQuestion = [
     }
 ]
 
+let removeEmployeeQuestion = [
+    {
+        name: "whichEmployee",
+        type: "list",
+        message: "Which employee would you like to remove?",
+        choices: []
+    }
+]
+
 function askInit () {
     inquirer.prompt(initialQuestion).then((answers) => {
         switch (answers.whatToDo) {
@@ -195,6 +205,9 @@ function askInit () {
                 break;
             case "Delete Department":
                 deleteDepartment();
+                break;
+            case "Remove Employee":
+                removeEmployee();
                 break;
             case "Quit":
                 console.log("Good Bye!");
@@ -394,8 +407,23 @@ let deleteRole = () => {
         inquirer.prompt(deleteRoleQuestion)
         .then((response) => {
             db.query("DELETE FROM role WHERE id = ?;", [response.whichRole], (err, data) => {
-                console.log("\n--------------\n")
+                console.log("\n------------\n")
                 console.log("Role Deleted!")
+                console.log("\n------------\n")
+                askInit();
+            })
+        })
+    })
+};
+
+let removeEmployee = () => {
+    db.query("SELECT * FROM employee;", (err, data) => {
+        removeEmployeeQuestion[0].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}));
+        inquirer.prompt(removeEmployeeQuestion)
+        .then((response) => {
+            db.query("DELETE FROM employee WHERE id = ?;", [response.whichEmployee], (err, data) => {
+                console.log("\n--------------\n")
+                console.log("Employee Removed!")
                 console.log("\n--------------\n")
                 askInit();
             })
