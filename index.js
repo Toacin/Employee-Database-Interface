@@ -109,8 +109,17 @@ let updateEmpManQuestion = [
 let viewByDepartmentQuestions = [
     {
         type: "list",
-        name: "whichManager",
+        name: "whichDepartment",
         message: "Which Department would you like to check?",
+        choices: []
+    }
+]
+
+let viewByManagerQuestions = [
+    {
+        type: "list",
+        name: "whichManager",
+        message: "Which Manager would you like to check?",
         choices: []
     }
 ]
@@ -145,9 +154,9 @@ function askInit () {
             case "View Employees by Department":
                 viewByDepartment();
                 break;
-            // case "View Employee by Manager":
-            //     viewByManager();
-            //     break;
+            case "View Employee by Manager":
+                viewByManager();
+                break;
             case "Quit":
                 console.log("Good Bye!");
                 process.exit();
@@ -285,7 +294,7 @@ let viewByDepartment = () => {
         viewByDepartmentQuestions[0].choices = data.map((element) => ({value: element.id, name: element.name}));
         inquirer.prompt(viewByDepartmentQuestions)
         .then((response) => {
-            db.query("SELECT first_name, last_name, name AS department FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id WHERE department.id = ?;", [response.whichManager], (err, data) => {
+            db.query("SELECT first_name, last_name, name AS department FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id WHERE department.id = ?;", [response.whichDepartment], (err, data) => {
                 console.table(data);
                 askInit();
             })
@@ -293,9 +302,22 @@ let viewByDepartment = () => {
     })
 };
 
-// let viewByManager = () => {
-//     db.query("SELECT first_name, last_name, name FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id; ", (err, data) => {
-//         console.table(data);
-//         askInit();
-//     })
-// };
+let viewByManager = () => {
+    db.query("SELECT * FROM employee;", (err, data) => {
+        viewByManagerQuestions[0].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}))
+        inquirer.prompt(viewByManagerQuestions)
+        .then((response) => {
+            db.query("SELECT B.first_name, B.last_name FROM employee A JOIN employee B ON A.id = B.manager_id WHERE A.id = ?;", [response.whichManager], (err, data) => {
+                if (data.length === 0) {
+                    console.log("\n-----------------------------------------\n")
+                    console.log("This person has no subordinates/not a manager")
+                    console.log("\n-----------------------------------------\n")
+                    askInit();
+                } else {
+                    console.table(data);
+                    askInit();
+                }
+            })
+        })
+    })
+};
