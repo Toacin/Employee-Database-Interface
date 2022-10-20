@@ -27,7 +27,7 @@ let initialQuestion = [
             "Delete Role",
             "View All Departments",
             "Add Department",
-            "View Budget",
+            "View Department's Budget",
             "Delete Department",
             "Quit"
         ]
@@ -92,7 +92,7 @@ let updateEmployeeQuestion = [
     },
     {
         type: "list",
-        name: "newManager",
+        name: "newRole",
         message: "What is the new role of this employee?",
         choices: []
     }
@@ -132,14 +132,14 @@ let viewByManagerQuestions = [
 ]
 
 // view budget feature not fully completed, although works. In time, this will be utilized but commented out for now
-// let viewBudgetQuestion = [
-//     {
-//         name: "whichDepart",
-//         type: "list",
-//         message: "Which department's budget would you like to view?",
-//         choices: []
-//     }
-// ]
+let viewBudgetQuestion = [
+    {
+        name: "whichDepart",
+        type: "list",
+        message: "Which department's budget would you like to view?",
+        choices: []
+    }
+]
 
 let deleteDepartmentQuestion = [
     {
@@ -206,7 +206,7 @@ function askInit () {
             case "View Employee by Manager":
                 viewByManager();
                 break;
-            case "View Budget":
+            case "View Department's Budget":
                 viewBudget();
                 break;
             case "Delete Department":
@@ -400,17 +400,16 @@ let viewByManager = () => {
 
 // function to view budget per department
 let viewBudget = () => {
-    db.query("SELECT sum(salary) AS budget, name AS department FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id GROUP BY name;", (err, data) => {
-        console.table(data);
-        askInit();
+    db.query("SELECT * FROM department;", (err, data) => {
+        viewBudgetQuestion[0].choices = data.map((element) => ({value: element.id, name: element.name}));
+        inquirer.prompt(viewBudgetQuestion)
+        .then((response) => {
+            db.query("SELECT SUM(salary) AS budget, name AS department FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id WHERE department.id=? GROUP BY name;", [response.whichDepart], (err, data) => {
+                console.table(data);
+                askInit();
+            })
+        })
     })
-    // this function will eventually allow user to choose which department's budget to view, but for now shows budgets for all departments at once
-    // db.query("SELECT * FROM department;", (err, data) => {
-    //     viewBudgetQuestion[0].choices = data.map((element) => (element.name));
-    //     inquirer.prompt(viewBudgetQuestion)
-    //     .then((response) => {
-    //     })
-    // })
 };
 
 // function to delete department
@@ -444,7 +443,6 @@ let deleteRole = () => {
         })
     })
 };
-
 
 // function to delete employee
 let removeEmployee = () => {
