@@ -147,9 +147,9 @@ let deleteDepartmentQuestion = [
 
 let deleteRoleQuestion = [
     {
-        name: "whichDepart",
+        name: "whichRole",
         type: "list",
-        message: "Which department would you like to delete?",
+        message: "Which role would you like to delete?",
         choices: []
     }
 ]
@@ -173,7 +173,7 @@ function askInit () {
                 addRole();
                 break;
             case "Delete Role":
-                deleteDepartment();
+                deleteRole();
                 break;
             case "Add Employee":
                 addEmployee();
@@ -388,3 +388,17 @@ let deleteDepartment = () => {
     })
 };
 
+let deleteRole = () => {
+    db.query("SELECT * FROM role;", (err, data) => {
+        deleteRoleQuestion[0].choices = data.map((element) => ({value: element.id, name: element.title}));
+        inquirer.prompt(deleteRoleQuestion)
+        .then((response) => {
+            db.query("DELETE FROM role WHERE id = ?;", [response.whichRole], (err, data) => {
+                console.log("\n--------------\n")
+                console.log("Role Deleted!")
+                console.log("\n--------------\n")
+                askInit();
+            })
+        })
+    })
+};
