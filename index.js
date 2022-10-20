@@ -1,12 +1,14 @@
 const inquirer = require("inquirer");
 const db = require("./db/connection.js");
 
+// connection initialized here
 db.connect((error) => {
     if (error) throw error;
     console.log("Successfully connected to database");
     askInit();
 })
 
+// questions initalized below
 let initialQuestion = [
     {
         type: "list",
@@ -39,6 +41,7 @@ let whatDepartment = [
     }
 ]
 
+// questions with choices are empty below and will be populated later
 let whatRole = [
     {
         name: "roleName",
@@ -128,6 +131,7 @@ let viewByManagerQuestions = [
     }
 ]
 
+// view budget feature not fully completed, although works. In time, this will be utilized but commented out for now
 // let viewBudgetQuestion = [
 //     {
 //         name: "whichDepart",
@@ -164,8 +168,10 @@ let removeEmployeeQuestion = [
     }
 ]
 
+// initial question for use to choose database action
 function askInit () {
     inquirer.prompt(initialQuestion).then((answers) => {
+        // switch user input with all possible values and execute respective function
         switch (answers.whatToDo) {
             case "View All Employees":
                 getEmployees();
@@ -219,6 +225,7 @@ function askInit () {
     })
 };
 
+// simply SQL query to get all data from employee table
 let getEmployees = () => {
     db.query("SELECT * FROM employee;", (err, data) => {
         console.table(data);
@@ -226,6 +233,7 @@ let getEmployees = () => {
     })
 };
 
+// simply SQL query to get all data from role table
 let getRoles = () => {
     db.query("SELECT * FROM role;", (err, data) => {
         console.table(data);
@@ -233,6 +241,7 @@ let getRoles = () => {
     })
 };
 
+// simply SQL query to get all data from department table
 let getDepartments = () => {
     db.query("SELECT * FROM department;", (err, data) => {
         console.table(data);
@@ -240,6 +249,7 @@ let getDepartments = () => {
     })
 };
 
+// simply SQL query to get all data from employee table
 let addDepartment = () => {
     inquirer.prompt(whatDepartment)
     .then((response) => {
@@ -252,6 +262,7 @@ let addDepartment = () => {
     })
 };
 
+// to addrole, first update possible department choices, then inquirer.prompt updated question array with appropriate choices. DB query to add role
 let addRole = () => {
     db.query("SELECT * FROM department;", (err, data) => {
         whatRole[2].choices = data.map((element) => ({value: element.id, name: element.name}));
@@ -269,11 +280,13 @@ let addRole = () => {
     })
 };
 
+// to add employee, first update possible role choices, second update possible employee for manager choices, then inquirer.prompt updated question array with appropriate choices. DB query to add employee
 let addEmployee = () => {
     db.query("SELECT * FROM role;", (err, data) => {
         whatEmployee[2].choices = data.map((element) => ({value: element.id, name: element.title}))
         db.query("SELECT * FROM employee;", (err, data) => {
             whatEmployee[3].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}));
+            // push none to choices incase none of the employees in database are their manager
             whatEmployee[3].choices.push({value: null, name: "None"});
             inquirer.prompt(whatEmployee)
             .then((response) => {
@@ -291,13 +304,17 @@ let addEmployee = () => {
     })
 };
 
+// function to update employee role
 let updateEmployeeRole = () => {
     db.query("SELECT * FROM employee;", (err, data) => {
+        // select employee to update
         updateEmployeeQuestion[0].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}));
         db.query("SELECT * FROM role;", (err, data) => {
+            // choices for new role
             updateEmployeeQuestion[1].choices = data.map((element) => ({value: element.id, name: element.title}))
             inquirer.prompt(updateEmployeeQuestion)
             .then((response) => {
+                // then update role
                 db.query(`UPDATE employee SET role_id = ? WHERE id = ?;`, 
                 [response.newRole, response.employeeName], 
                 (err, data) => {
@@ -312,20 +329,25 @@ let updateEmployeeRole = () => {
     })
 };
 
+// function to update employee manager
 let updateEmployeeManager = () => {
     db.query("SELECT * FROM employee;", (err, data) => {
+        // choices for employee to update
         updateEmpManQuestion[0].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}));
         db.query("SELECT * FROM employee;", (err, data) => {
+            // choices for which employee is new manager. push none option in case no manager
             updateEmpManQuestion[1].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}));
             updateEmpManQuestion[1].choices.push({value: null, name: "None"});
             inquirer.prompt(updateEmpManQuestion)
             .then((response) => {
                 if (response.employeeName === response.newManager) {
+                    // don't update manager in case manager is self, reprompt questions
                     console.log("\n-----------------------------------------\n")
                     console.log("Employee's new manager cannot be themself")
                     console.log("\n-----------------------------------------\n")
                     updateEmployeeManager();
                 } else {
+                    // else update manager
                     db.query(`UPDATE employee SET manager_id = ? WHERE id = ?;`, 
                     [response.newManager, response.employeeName], 
                     (err, data) => {
@@ -341,6 +363,7 @@ let updateEmployeeManager = () => {
     })
 };
 
+// function to view employees by department
 let viewByDepartment = () => {
     db.query("SELECT * FROM department;", (err, data) => {
         viewByDepartmentQuestions[0].choices = data.map((element) => ({value: element.id, name: element.name}));
@@ -354,6 +377,7 @@ let viewByDepartment = () => {
     })
 };
 
+// function to view employees by manager
 let viewByManager = () => {
     db.query("SELECT * FROM employee;", (err, data) => {
         viewByManagerQuestions[0].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}))
@@ -374,11 +398,13 @@ let viewByManager = () => {
     })
 };
 
+// function to view budget per department
 let viewBudget = () => {
     db.query("SELECT sum(salary) AS budget, name AS department FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id GROUP BY name;", (err, data) => {
         console.table(data);
         askInit();
     })
+    // this function will eventually allow user to choose which department's budget to view, but for now shows budgets for all departments at once
     // db.query("SELECT * FROM department;", (err, data) => {
     //     viewBudgetQuestion[0].choices = data.map((element) => (element.name));
     //     inquirer.prompt(viewBudgetQuestion)
@@ -387,6 +413,7 @@ let viewBudget = () => {
     // })
 };
 
+// function to delete department
 let deleteDepartment = () => {
     db.query("SELECT * FROM department;", (err, data) => {
         deleteDepartmentQuestion[0].choices = data.map((element) => ({value: element.id, name: element.name}));
@@ -396,11 +423,13 @@ let deleteDepartment = () => {
                 console.log("\n-------------------\n")
                 console.log("Department Deleted!")
                 console.log("\n-------------------\n")
+                askInit();
             })
         })
     })
 };
 
+// function to delete role
 let deleteRole = () => {
     db.query("SELECT * FROM role;", (err, data) => {
         deleteRoleQuestion[0].choices = data.map((element) => ({value: element.id, name: element.title}));
@@ -416,6 +445,8 @@ let deleteRole = () => {
     })
 };
 
+
+// function to delete employee
 let removeEmployee = () => {
     db.query("SELECT * FROM employee;", (err, data) => {
         removeEmployeeQuestion[0].choices = data.map((element) => ({value: element.id, name: element.first_name+" "+element.last_name}));
