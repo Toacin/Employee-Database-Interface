@@ -21,9 +21,11 @@ let initialQuestion = [
             "Update Employee Manager",
             "View All Roles",
             "Add Role",
+            "Delete Role",
             "View All Departments",
             "Add Department",
             "View Budget",
+            "Delete Department",
             "Quit"
         ]
     }
@@ -134,6 +136,24 @@ let viewByManagerQuestions = [
 //     }
 // ]
 
+let deleteDepartmentQuestion = [
+    {
+        name: "whichDepart",
+        type: "list",
+        message: "Which department would you like to delete?",
+        choices: []
+    }
+]
+
+let deleteRoleQuestion = [
+    {
+        name: "whichDepart",
+        type: "list",
+        message: "Which department would you like to delete?",
+        choices: []
+    }
+]
+
 function askInit () {
     inquirer.prompt(initialQuestion).then((answers) => {
         switch (answers.whatToDo) {
@@ -152,6 +172,9 @@ function askInit () {
             case "Add Role":
                 addRole();
                 break;
+            case "Delete Role":
+                deleteDepartment();
+                break;
             case "Add Employee":
                 addEmployee();
                 break;
@@ -169,6 +192,9 @@ function askInit () {
                 break;
             case "View Budget":
                 viewBudget();
+                break;
+            case "Delete Department":
+                deleteDepartment();
                 break;
             case "Quit":
                 console.log("Good Bye!");
@@ -346,5 +372,19 @@ let viewBudget = () => {
     //     .then((response) => {
     //     })
     // })
+};
+
+let deleteDepartment = () => {
+    db.query("SELECT * FROM department;", (err, data) => {
+        deleteDepartmentQuestion[0].choices = data.map((element) => ({value: element.id, name: element.name}));
+        inquirer.prompt(deleteDepartmentQuestion)
+        .then((response) => {
+            db.query("DELETE FROM department WHERE id = ?;", [response.whichDepart], (err, data) => {
+                console.log("\n-------------------\n")
+                console.log("Department Deleted!")
+                console.log("\n-------------------\n")
+            })
+        })
+    })
 };
 
