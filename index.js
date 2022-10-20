@@ -23,6 +23,7 @@ let initialQuestion = [
             "Add Role",
             "View All Departments",
             "Add Department",
+            "View Budget",
             "Quit"
         ]
     }
@@ -124,6 +125,15 @@ let viewByManagerQuestions = [
     }
 ]
 
+// let viewBudgetQuestion = [
+//     {
+//         name: "whichDepart",
+//         type: "list",
+//         message: "Which department's budget would you like to view?",
+//         choices: []
+//     }
+// ]
+
 function askInit () {
     inquirer.prompt(initialQuestion).then((answers) => {
         switch (answers.whatToDo) {
@@ -156,6 +166,9 @@ function askInit () {
                 break;
             case "View Employee by Manager":
                 viewByManager();
+                break;
+            case "View Budget":
+                viewBudget();
                 break;
             case "Quit":
                 console.log("Good Bye!");
@@ -321,3 +334,17 @@ let viewByManager = () => {
         })
     })
 };
+
+let viewBudget = () => {
+    db.query("SELECT sum(salary) AS budget, name AS department FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id GROUP BY name;", (err, data) => {
+        console.table(data);
+        askInit();
+    })
+    // db.query("SELECT * FROM department;", (err, data) => {
+    //     viewBudgetQuestion[0].choices = data.map((element) => (element.name));
+    //     inquirer.prompt(viewBudgetQuestion)
+    //     .then((response) => {
+    //     })
+    // })
+};
+
